@@ -6,7 +6,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Task exposing (Task)
 import Window
-import WindowManager exposing (WindowLocation, WindowLayout, updateWindowDeltaX, updateWindowDeltaY, resetWindowResizeFences, FenceRule(..), viewWindow, onMouseDownTranslateWindow)
+import WindowManager exposing (WindowLocation, WindowLayout, initWindowLayout, updateWindowDeltaX, updateWindowDeltaY, resetWindowResizeFences, viewWindow, onMouseDownTranslateWindow)
 import Css.ThinkAlexandria.WindowManager.Common exposing (styleWindow)
 import Css.ThinkAlexandria.WindowManager.Default exposing (defaultStyleConfig)
 import Css.ThinkAlexandria.WindowManager.Selectors.Classes as Classes exposing (CssClasses(..))
@@ -46,25 +46,23 @@ init =
             , layout =
                 { app = { width = 640, height = 480, minWidth = 640, minHeight = 480 }
                 , terminal =
-                    { width = 320
-                    , height = 44
-                    , left = 160
-                    , top = 390
-                    , minWidth = 100
-                    , minHeight = 44
-                    , resizeXFence = Allow
-                    , resizeYFence = Allow
-                    }
+                    initWindowLayout
+                        { width = 320
+                        , height = 44
+                        , left = 160
+                        , top = 390
+                        , minWidth = 100
+                        , minHeight = 44
+                        }
                 , widget =
-                    { width = 320
-                    , height = 100
-                    , left = 160
-                    , top = 100
-                    , minWidth = 100
-                    , minHeight = 100
-                    , resizeXFence = Allow
-                    , resizeYFence = Allow
-                    }
+                    initWindowLayout
+                        { width = 320
+                        , height = 100
+                        , left = 160
+                        , top = 100
+                        , minWidth = 100
+                        , minHeight = 100
+                        }
                 }
             , viewport = { width = 640, height = 480 }
             }

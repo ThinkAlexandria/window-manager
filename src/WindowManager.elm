@@ -2,7 +2,7 @@ module WindowManager
     exposing
         ( WindowLocation
         , WindowLayout
-        , FenceRule(..)
+        , initWindowLayout
         , updateWindowDeltaX
         , updateWindowDeltaY
         , resetWindowResizeFences
@@ -11,9 +11,11 @@ module WindowManager
         , onMouseDownTranslateWindow
         )
 
-{-| @docs WindowLayout, updateWindowDeltaX, updateWindowDeltaY, resetWindowResizeFences
+{-| @docs WindowLayout, initWindowLayout
 
-@docs Config, viewWindow
+@docs updateWindowDeltaX, updateWindowDeltaY, resetWindowResizeFences
+
+@docs Config, viewWindow, onMouseDownTranslateWindow
 
 @docs WindowLocation
 
@@ -51,6 +53,22 @@ type alias WindowLayout =
     , minHeight : Int
     , resizeXFence : FenceRule
     , resizeYFence : FenceRule
+    }
+
+
+{-| -}
+initWindowLayout :
+    { width : Int, height : Int, top : Int, left : Int, minWidth : Int, minHeight : Int }
+    -> WindowLayout
+initWindowLayout config =
+    { width = config.width
+    , height = config.height
+    , top = config.top
+    , left = config.left
+    , minWidth = config.minWidth
+    , minHeight = config.minHeight
+    , resizeXFence = Allow
+    , resizeYFence = Allow
     }
 
 
