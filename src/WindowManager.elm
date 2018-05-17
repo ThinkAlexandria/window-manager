@@ -11,7 +11,8 @@ module WindowManager
         , onMouseDownTranslateWindow
         )
 
-{-| @docs WindowLayout, initWindowLayout
+{-|
+@docs WindowLayout, initWindowLayout
 
 @docs updateWindowDeltaX, updateWindowDeltaY, resetWindowResizeFences
 
@@ -364,7 +365,7 @@ onMouseDownTranslateWindow : Config msg interactionLocation -> Attribute msg
 onMouseDownTranslateWindow config =
     Html.Attributes.map
         config.toMsg
-        (Drag.onMouseDown
+        (Drag.onMouseDownWithOptions
             { stopPropagation = True, preventDefault = True }
             (config.toInteractionLocation DragHandle)
         )
@@ -382,7 +383,7 @@ viewWindow config window contents =
         handleOnMouseDown location =
             Html.Attributes.map
                 config.toMsg
-                (Drag.onMouseDown
+                (Drag.onMouseDownWithOptions
                     { stopPropagation = True, preventDefault = True }
                     (config.toInteractionLocation location)
                 )
