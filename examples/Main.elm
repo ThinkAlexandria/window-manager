@@ -28,7 +28,7 @@ main =
 
 type InteractionLocation
     = TerminalWindow WindowLocation
-    | WidgetWindow WindowLocation
+    | WidgetWindow Int WindowLocation
 
 
 type alias Model =
@@ -44,7 +44,7 @@ init =
         model =
             { dragState = Drag.init
             , layout =
-                { app = { width = 640, height = 480, minWidth = 640, minHeight = 480 }
+                { app = { width = 1200, height = 800, minWidth = 640, minHeight = 480 }
                 , terminal =
                     initWindowLayout
                         { width = 320
@@ -54,11 +54,29 @@ init =
                         , minWidth = 100
                         , minHeight = 44
                         }
-                , widget =
+                , widget1 =
                     initWindowLayout
                         { width = 320
                         , height = 100
-                        , left = 160
+                        , left = 100
+                        , top = 100
+                        , minWidth = 100
+                        , minHeight = 100
+                        }
+                , widget2 =
+                    initWindowLayout
+                        { width = 320
+                        , height = 100
+                        , left = 200
+                        , top = 100
+                        , minWidth = 100
+                        , minHeight = 100
+                        }
+                , widget3 =
+                    initWindowLayout
+                        { width = 320
+                        , height = 100
+                        , left = 300
                         , top = 100
                         , minWidth = 100
                         , minHeight = 100
@@ -88,7 +106,9 @@ type alias Layout =
         , minHeight : Int
         }
     , terminal : WindowLayout
-    , widget : WindowLayout
+    , widget1 : WindowLayout
+    , widget2 : WindowLayout
+    , widget3 : WindowLayout
     }
 
 
@@ -150,19 +170,64 @@ updateDragMsg dragMsg model =
                                 | layout = syncAppSize { modelLayout | terminal = newTerminal }
                             }
 
-                    WidgetWindow windowLocation ->
-                        let
-                            newWidget =
-                                model.layout.widget
-                                    |> updateWindowDeltaX windowLocation currentMousePosition dx
-                                    |> updateWindowDeltaY windowLocation currentMousePosition dy
+                    WidgetWindow i windowLocation ->
+                        case i of
+                            1 ->
+                                let
+                                    newWidget1 =
+                                        model.layout.widget1
+                                            |> updateWindowDeltaX windowLocation currentMousePosition dx
+                                            |> updateWindowDeltaY windowLocation currentMousePosition dy
 
-                            modelLayout =
-                                model.layout
-                        in
-                            { updatedModel
-                                | layout = syncAppSize { modelLayout | widget = newWidget }
-                            }
+                                    modelLayout =
+                                        model.layout
+                                in
+                                    { updatedModel
+                                        | layout =
+                                            syncAppSize
+                                                { modelLayout
+                                                    | widget1 = newWidget1
+                                                }
+                                    }
+
+                            2 ->
+                                let
+                                    newWidget2 =
+                                        model.layout.widget2
+                                            |> updateWindowDeltaX windowLocation currentMousePosition dx
+                                            |> updateWindowDeltaY windowLocation currentMousePosition dy
+
+                                    modelLayout =
+                                        model.layout
+                                in
+                                    { updatedModel
+                                        | layout =
+                                            syncAppSize
+                                                { modelLayout
+                                                    | widget2 = newWidget2
+                                                }
+                                    }
+
+                            3 ->
+                                let
+                                    newWidget3 =
+                                        model.layout.widget3
+                                            |> updateWindowDeltaX windowLocation currentMousePosition dx
+                                            |> updateWindowDeltaY windowLocation currentMousePosition dy
+
+                                    modelLayout =
+                                        model.layout
+                                in
+                                    { updatedModel
+                                        | layout =
+                                            syncAppSize
+                                                { modelLayout
+                                                    | widget3 = newWidget3
+                                                }
+                                    }
+
+                            _ ->
+                                updatedModel
 
         Drag.End _ _ ->
             let
@@ -218,9 +283,9 @@ syncAppSize layout =
 -- VIEW
 
 
-widgetWindowConfig =
+terminalWindowConfig =
     { toMsg = DragMsg
-    , toInteractionLocation = WidgetWindow
+    , toInteractionLocation = TerminalWindow
     , windowContainerClass = Classes.toString WindowContainer
     , leftResizeHorizontallyHandleClass = Classes.toString LeftResizeHandle
     , rightResizeHorizontallyHandleClass = Classes.toString RightResizeHandle
@@ -233,8 +298,8 @@ widgetWindowConfig =
     }
 
 
-terminalWindowConfig =
-    { widgetWindowConfig | toInteractionLocation = TerminalWindow }
+widgetWindowConfig i =
+    { terminalWindowConfig | toInteractionLocation = WidgetWindow i }
 
 
 view : Model -> Html Msg
@@ -304,8 +369,8 @@ view model =
                 ]
             ]
         , viewWindow
-            widgetWindowConfig
-            model.layout.widget
+            (widgetWindowConfig 1)
+            model.layout.widget1
             [ div
                 [ style
                     [ ( "background-color", "#fff" )
@@ -315,7 +380,7 @@ view model =
                     , ( "overflow", "hidden" )
                     ]
                 ]
-                [ text "widget"
+                [ text "widget1"
                 , div
                     [ style
                         [ ( "background-color", "#95f" )
@@ -324,7 +389,59 @@ view model =
                         , ( "margin-top", "50px" )
                         , ( "margin-left", "50px" )
                         ]
-                    , onMouseDownTranslateWindow widgetWindowConfig
+                    , onMouseDownTranslateWindow (widgetWindowConfig 1)
+                    ]
+                    [ text "window drag handle" ]
+                ]
+            ]
+        , viewWindow
+            (widgetWindowConfig 2)
+            model.layout.widget2
+            [ div
+                [ style
+                    [ ( "background-color", "#fff" )
+                    , ( "width", "100%" )
+                    , ( "height", "100%" )
+                    , ( "position", "relative" )
+                    , ( "overflow", "hidden" )
+                    ]
+                ]
+                [ text "widget2"
+                , div
+                    [ style
+                        [ ( "background-color", "#95f" )
+                        , ( "width", "100px" )
+                        , ( "height", "50px" )
+                        , ( "margin-top", "50px" )
+                        , ( "margin-left", "50px" )
+                        ]
+                    , onMouseDownTranslateWindow (widgetWindowConfig 2)
+                    ]
+                    [ text "window drag handle" ]
+                ]
+            ]
+        , viewWindow
+            (widgetWindowConfig 3)
+            model.layout.widget3
+            [ div
+                [ style
+                    [ ( "background-color", "#fff" )
+                    , ( "width", "100%" )
+                    , ( "height", "100%" )
+                    , ( "position", "relative" )
+                    , ( "overflow", "hidden" )
+                    ]
+                ]
+                [ text "widget3"
+                , div
+                    [ style
+                        [ ( "background-color", "#95f" )
+                        , ( "width", "100px" )
+                        , ( "height", "50px" )
+                        , ( "margin-top", "50px" )
+                        , ( "margin-left", "50px" )
+                        ]
+                    , onMouseDownTranslateWindow (widgetWindowConfig 3)
                     ]
                     [ text "window drag handle" ]
                 ]
