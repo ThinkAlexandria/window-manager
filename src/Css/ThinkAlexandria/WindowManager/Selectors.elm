@@ -1,4 +1,4 @@
-module Css.ThinkAlexandria.WindowManager.Selectors exposing (class, classList)
+module Css.ThinkAlexandria.WindowManager.Selectors exposing (CssClasses, class, classList)
 
 {-| This elm module provides strongly typed selectors for
 
@@ -6,13 +6,15 @@ module Css.ThinkAlexandria.WindowManager.Selectors exposing (class, classList)
 
 -}
 
-import Html.Attributes
+import Css.ThinkAlexandria.WindowManager.Selectors.Classes as Classes
 import Html
-import Css.ThinkAlexandria.WindowManager.Selectors.Classes
+import Html.Attributes
 
 
+{-| The CSS classes for styling the window chrome
+-}
 type alias CssClasses =
-    Css.ThinkAlexandria.WindowManager.Selectors.Classes.CssClasses
+    Classes.CssClasses
 
 
 {-| Helper lets you keep type checking of selectors all the way to call site.

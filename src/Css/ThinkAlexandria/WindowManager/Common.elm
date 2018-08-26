@@ -1,8 +1,16 @@
 module Css.ThinkAlexandria.WindowManager.Common exposing (WindowStyleConfig, WindowSelectorConfig, styleWindow)
 
+{-|
+
+@docs WindowStyleConfig, WindowSelectorConfig, styleWindow
+
+-}
+
 import Css exposing (..)
 
 
+{-| Configuration for the Window view function
+-}
 type alias WindowStyleConfig =
     { borderRightWidth : Float
     , borderLeftWidth : Float
@@ -32,6 +40,8 @@ type alias WindowStyleConfig =
     }
 
 
+{-| Provide custom css selectors for elements that make up the Window chrome.
+-}
 type alias WindowSelectorConfig =
     { windowContainerClass : String
     , leftResizeHorizontallyHandleClass : String
@@ -45,6 +55,8 @@ type alias WindowSelectorConfig =
     }
 
 
+{-| Default styling for Window chrome.
+-}
 styleWindow : WindowStyleConfig -> List Snippet
 styleWindow config =
     [ class config.selectors.windowContainerClass
@@ -68,7 +80,7 @@ styleWindow config =
         , top zero
         , left zero
         , width (px (config.paddingLeft + config.borderLeftWidth))
-        , height (px (config.cornerHandleHeight))
+        , height (px config.cornerHandleHeight)
         , borderLeft3 (px config.borderLeftWidth) solid (hex config.borderLeftColor)
         , borderTop3 (px config.borderTopWidth) solid (hex config.borderTopColor)
         , borderTopLeftRadius (px config.borderTopLeftRadius)
@@ -93,6 +105,7 @@ styleWindow config =
         , height (px config.cornerHandleHeight)
         , borderRight3 (px config.borderRightWidth) solid (hex config.borderRightColor)
         , borderTop3 (px config.borderTopWidth) solid (hex config.borderTopColor)
+        , borderTopRightRadius (px config.borderTopRightRadius)
         , backgroundColor (hex config.windowBackgroundColor)
         ]
     , class config.selectors.leftResizeHorizontallyHandleClass
@@ -124,6 +137,7 @@ styleWindow config =
         , height (px config.cornerHandleHeight)
         , borderLeft3 (px config.borderLeftWidth) solid (hex config.borderLeftColor)
         , borderBottom3 (px config.borderBottomWidth) solid (hex config.borderBottomColor)
+        , borderBottomLeftRadius (px config.borderBottomLeftRadius)
         , backgroundColor (hex config.windowBackgroundColor)
         ]
     , class config.selectors.bottomResizeVerticallyHandleClass
@@ -145,6 +159,7 @@ styleWindow config =
         , height (px config.cornerHandleHeight)
         , borderRight3 (px config.borderRightWidth) solid (hex config.borderRightColor)
         , borderBottom3 (px config.borderBottomWidth) solid (hex config.borderBottomColor)
+        , borderBottomRightRadius (px config.borderBottomRightRadius)
         , backgroundColor (hex config.windowBackgroundColor)
         ]
     ]

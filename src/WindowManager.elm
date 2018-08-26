@@ -1,17 +1,12 @@
-module WindowManager
-    exposing
-        ( WindowLocation
-        , WindowLayout
-        , initWindowLayout
-        , updateWindowDeltaX
-        , updateWindowDeltaY
-        , resetWindowResizeFences
-        , Config
-        , viewWindow
-        , onMouseDownTranslateWindow
-        )
+module WindowManager exposing
+    ( WindowLayout, initWindowLayout
+    , updateWindowDeltaX, updateWindowDeltaY, resetWindowResizeFences
+    , Config, viewWindow, onMouseDownTranslateWindow
+    , WindowLocation
+    )
 
 {-|
+
 @docs WindowLayout, initWindowLayout
 
 @docs updateWindowDeltaX, updateWindowDeltaY, resetWindowResizeFences
@@ -26,6 +21,7 @@ import Drag
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Task exposing (Task)
+
 
 
 -- MODEL
@@ -179,12 +175,14 @@ fencedWindowDeltaX dx mousePosition window =
         RejectLessThan x ->
             if mousePosition.x > x then
                 Just (mousePosition.x - x)
+
             else
                 Nothing
 
         RejectGreaterThan x ->
             if mousePosition.x < x then
                 Just (mousePosition.x - x)
+
             else
                 Nothing
 
@@ -198,12 +196,14 @@ fencedWindowDeltaY dy mousePosition window =
         RejectLessThan y ->
             if mousePosition.y > y then
                 Just (mousePosition.y - y)
+
             else
                 Nothing
 
         RejectGreaterThan y ->
             if mousePosition.y < y then
                 Just (mousePosition.y - y)
+
             else
                 Nothing
 
@@ -217,6 +217,7 @@ translateWindowX dx currentMousePosition window =
             | left = 0
             , resizeXFence = RejectLessThan (currentMousePosition.x - window.left - dx)
         }
+
     else
         { window
             | left = window.left + dx
@@ -231,6 +232,7 @@ translateWindowY dy currentMousePosition window =
             | top = 0
             , resizeYFence = RejectLessThan (currentMousePosition.y - window.top - dy)
         }
+
     else
         { window
             | top = window.top + dy
@@ -249,22 +251,25 @@ resizeWindowLeft dx currentMousePosition window =
             -- reason the minWidth is larger than
             -- the actual width
             validDeltaX =
-                (window.width - window.minWidth)
+                window.width - window.minWidth
         in
-            if validDeltaX < 0 then
-                window
-            else
-                { window
-                    | left = window.left + validDeltaX
-                    , width = window.width - validDeltaX
-                    , resizeXFence = RejectGreaterThan (currentMousePosition.x - dx + validDeltaX)
-                }
+        if validDeltaX < 0 then
+            window
+
+        else
+            { window
+                | left = window.left + validDeltaX
+                , width = window.width - validDeltaX
+                , resizeXFence = RejectGreaterThan (currentMousePosition.x - dx + validDeltaX)
+            }
+
     else if window.left + dx < 0 then
         { window
             | left = 0
             , width = window.width + (window.left - 0)
             , resizeXFence = RejectLessThan (currentMousePosition.x - window.left - dx)
         }
+
     else
         { window
             | left = window.left + dx
@@ -282,6 +287,7 @@ resizeWindowRight dx currentMousePosition window =
             | width = window.minWidth
             , resizeXFence = RejectLessThan (currentMousePosition.x - ((window.width + dx) - window.minWidth))
         }
+
     else
         { window
             | width = window.width + dx
@@ -300,22 +306,25 @@ resizeWindowTop dy currentMousePosition window =
             -- reason the minHeight is larger than
             -- the actual height
             validDeltaY =
-                (window.height - window.minHeight)
+                window.height - window.minHeight
         in
-            if validDeltaY < 0 then
-                window
-            else
-                { window
-                    | top = window.top + validDeltaY
-                    , height = window.height - validDeltaY
-                    , resizeYFence = RejectGreaterThan (currentMousePosition.y - dy + validDeltaY)
-                }
+        if validDeltaY < 0 then
+            window
+
+        else
+            { window
+                | top = window.top + validDeltaY
+                , height = window.height - validDeltaY
+                , resizeYFence = RejectGreaterThan (currentMousePosition.y - dy + validDeltaY)
+            }
+
     else if window.top + dy < 0 then
         { window
             | top = 0
             , height = window.height + (window.top - 0)
             , resizeYFence = RejectLessThan (currentMousePosition.y - window.top - dy)
         }
+
     else
         { window
             | top = window.top + dy
@@ -331,6 +340,7 @@ resizeWindowBottom dy currentMousePosition window =
             | height = window.minHeight
             , resizeYFence = RejectLessThan (currentMousePosition.y - ((window.height + dy) - window.minHeight))
         }
+
     else
         { window
             | height = window.height + dy
@@ -388,55 +398,53 @@ viewWindow config window contents =
                     (config.toInteractionLocation location)
                 )
     in
-        div
-            [ style
-                [ ( "height", (toString window.height) ++ "px" )
-                , ( "width", (toString window.width) ++ "px" )
-                , ( "top", (toString window.top) ++ "px" )
-                , ( "left", (toString window.left) ++ "px" )
-                ]
-            , class config.windowContainerClass
+    div
+        [ style "height" (String.fromInt window.height ++ "px")
+        , style "width" (String.fromInt window.width ++ "px")
+        , style "top" (String.fromInt window.top ++ "px")
+        , style "left" (String.fromInt window.left ++ "px")
+        , class config.windowContainerClass
+        ]
+        ([ div
+            [ class config.upperLeftCornerResizeHandleClass
+            , handleOnMouseDown UpperLeftCornerResizeHandle
             ]
-            ([ div
-                [ class config.upperLeftCornerResizeHandleClass
-                , handleOnMouseDown UpperLeftCornerResizeHandle
-                ]
-                []
-             , div
-                [ class config.topResizeVerticallyHandleClass
-                , handleOnMouseDown TopResizeVerticallyHandle
-                ]
-                []
-             , div
-                [ class config.upperRightCornerResizeHandleClass
-                , handleOnMouseDown UpperRightCornerResizeHandle
-                ]
-                []
-             , div
-                [ class config.leftResizeHorizontallyHandleClass
-                , handleOnMouseDown LeftResizeHorizontallyHandle
-                ]
-                []
-             , div
-                [ class config.rightResizeHorizontallyHandleClass
-                , handleOnMouseDown RightResizeHorizontallyHandle
-                ]
-                []
-             , div
-                [ class config.lowerLeftCornerResizeHandleClass
-                , handleOnMouseDown LowerLeftCornerResizeHandle
-                ]
-                []
-             , div
-                [ class config.bottomResizeVerticallyHandleClass
-                , handleOnMouseDown BottomResizeVerticallyHandle
-                ]
-                []
-             , div
-                [ class config.lowerRightCornerResizeHandleClass
-                , handleOnMouseDown LowerRightCornerResizeHandle
-                ]
-                []
-             ]
-                ++ contents
-            )
+            []
+         , div
+            [ class config.topResizeVerticallyHandleClass
+            , handleOnMouseDown TopResizeVerticallyHandle
+            ]
+            []
+         , div
+            [ class config.upperRightCornerResizeHandleClass
+            , handleOnMouseDown UpperRightCornerResizeHandle
+            ]
+            []
+         , div
+            [ class config.leftResizeHorizontallyHandleClass
+            , handleOnMouseDown LeftResizeHorizontallyHandle
+            ]
+            []
+         , div
+            [ class config.rightResizeHorizontallyHandleClass
+            , handleOnMouseDown RightResizeHorizontallyHandle
+            ]
+            []
+         , div
+            [ class config.lowerLeftCornerResizeHandleClass
+            , handleOnMouseDown LowerLeftCornerResizeHandle
+            ]
+            []
+         , div
+            [ class config.bottomResizeVerticallyHandleClass
+            , handleOnMouseDown BottomResizeVerticallyHandle
+            ]
+            []
+         , div
+            [ class config.lowerRightCornerResizeHandleClass
+            , handleOnMouseDown LowerRightCornerResizeHandle
+            ]
+            []
+         ]
+            ++ contents
+        )

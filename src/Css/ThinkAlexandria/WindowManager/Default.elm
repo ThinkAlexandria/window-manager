@@ -1,9 +1,17 @@
-module Css.ThinkAlexandria.WindowManager.Default exposing (..)
+module Css.ThinkAlexandria.WindowManager.Default exposing (defaultSelectorConfig, defaultStyleConfig)
 
-import Css.ThinkAlexandria.WindowManager.Common exposing (WindowStyleConfig, WindowSelectorConfig)
+{-|
+
+@docs defaultSelectorConfig, defaultStyleConfig
+
+-}
+
+import Css.ThinkAlexandria.WindowManager.Common exposing (WindowSelectorConfig, WindowStyleConfig)
 import Css.ThinkAlexandria.WindowManager.Selectors.Classes as Classes exposing (CssClasses(..))
 
 
+{-| Garishly colored Window configuration best used for debugging.
+-}
 defaultStyleConfig : WindowStyleConfig
 defaultStyleConfig =
     { borderRightWidth = 2
@@ -34,6 +42,8 @@ defaultStyleConfig =
     }
 
 
+{-| Default css selectors.
+-}
 defaultSelectorConfig : WindowSelectorConfig
 defaultSelectorConfig =
     { windowContainerClass = Classes.toString WindowContainer
