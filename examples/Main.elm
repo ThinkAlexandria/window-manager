@@ -1,20 +1,22 @@
 module Main exposing (main)
 
+import Browser
+import Browser.Dom
+import Browser.Events
 import Css
+import Css.ThinkAlexandria.WindowManager.Common exposing (styleWindow)
+import Css.ThinkAlexandria.WindowManager.Default exposing (defaultStyleConfig)
+import Css.ThinkAlexandria.WindowManager.Selectors.Classes as Classes exposing (CssClasses(..))
 import Drag
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Task exposing (Task)
-import Window
-import WindowManager exposing (WindowLocation, WindowLayout, initWindowLayout, updateWindowDeltaX, updateWindowDeltaY, resetWindowResizeFences, viewWindow, onMouseDownTranslateWindow)
-import Css.ThinkAlexandria.WindowManager.Common exposing (styleWindow)
-import Css.ThinkAlexandria.WindowManager.Default exposing (defaultStyleConfig)
-import Css.ThinkAlexandria.WindowManager.Selectors.Classes as Classes exposing (CssClasses(..))
+import WindowManager exposing (WindowLayout, WindowLocation, initWindowLayout, onMouseDownTranslateWindow, resetWindowResizeFences, updateWindowDeltaX, updateWindowDeltaY, viewWindow)
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
+    Browser.element
         { view = view
         , update = update
         , init = init
@@ -38,8 +40,8 @@ type alias Model =
     }
 
 
-init : ( Model, Cmd Msg )
-init =
+init : () -> ( Model, Cmd Msg )
+init () =
     let
         model =
             { dragState = Drag.init
@@ -67,14 +69,14 @@ init =
             , viewport = { width = 640, height = 480 }
             }
     in
-        ( model, Task.attempt processWindowSize Window.size )
+    ( model, Task.attempt processWindowSize Browser.Dom.getViewport )
 
 
-processWindowSize : Result x Window.Size -> Msg
+processWindowSize : Result x Browser.Dom.Viewport -> Msg
 processWindowSize result =
     case result of
-        Ok size ->
-            ResizeWindow size
+        Ok { viewport } ->
+            ResizeWindow (round viewport.width) (round viewport.height)
 
         Err _ ->
             NoOp
@@ -98,7 +100,7 @@ type alias Layout =
 
 type Msg
     = NoOp
-    | ResizeWindow Window.Size
+    | ResizeWindow Int Int
     | DragMsg (Drag.Msg InteractionLocation)
 
 
@@ -111,12 +113,8 @@ update msg model =
         DragMsg dragMsg ->
             ( updateDragMsg dragMsg model, Cmd.none )
 
-        ResizeWindow windowSize ->
-            let
-                _ =
-                    3
-            in
-                ( { model | viewport = windowSize }, Cmd.none )
+        ResizeWindow width height ->
+            ( { model | viewport = { width = width, height = height } }, Cmd.none )
 
 
 updateDragMsg : Drag.Msg InteractionLocation -> Model -> Model
@@ -133,50 +131,50 @@ updateDragMsg dragMsg model =
                 updatedModel =
                     { model | dragState = Drag.update dragMsg model.dragState }
             in
-                -- Dirty hack because we can only drag the terminal, so there
-                -- is no need to match on the location tag
-                case location of
-                    TerminalWindow windowLocation ->
-                        let
-                            newTerminal =
-                                model.layout.terminal
-                                    |> updateWindowDeltaX windowLocation currentMousePosition dx
-                                    |> updateWindowDeltaY windowLocation currentMousePosition dy
+            -- Dirty hack because we can only drag the terminal, so there
+            -- is no need to match on the location tag
+            case location of
+                TerminalWindow windowLocation ->
+                    let
+                        newTerminal =
+                            model.layout.terminal
+                                |> updateWindowDeltaX windowLocation currentMousePosition dx
+                                |> updateWindowDeltaY windowLocation currentMousePosition dy
 
-                            modelLayout =
-                                model.layout
-                        in
-                            { updatedModel
-                                | layout = syncAppSize { modelLayout | terminal = newTerminal }
-                            }
+                        modelLayout =
+                            model.layout
+                    in
+                    { updatedModel
+                        | layout = syncAppSize { modelLayout | terminal = newTerminal }
+                    }
 
-                    WidgetWindow windowLocation ->
-                        let
-                            newWidget =
-                                model.layout.widget
-                                    |> updateWindowDeltaX windowLocation currentMousePosition dx
-                                    |> updateWindowDeltaY windowLocation currentMousePosition dy
+                WidgetWindow windowLocation ->
+                    let
+                        newWidget =
+                            model.layout.widget
+                                |> updateWindowDeltaX windowLocation currentMousePosition dx
+                                |> updateWindowDeltaY windowLocation currentMousePosition dy
 
-                            modelLayout =
-                                model.layout
-                        in
-                            { updatedModel
-                                | layout = syncAppSize { modelLayout | widget = newWidget }
-                            }
+                        modelLayout =
+                            model.layout
+                    in
+                    { updatedModel
+                        | layout = syncAppSize { modelLayout | widget = newWidget }
+                    }
 
         Drag.End _ _ ->
             let
                 modelLayout =
                     model.layout
             in
-                { model
-                    | dragState = Drag.update dragMsg model.dragState
-                    , layout =
-                        { modelLayout
-                            | terminal =
-                                resetWindowResizeFences model.layout.terminal
-                        }
-                }
+            { model
+                | dragState = Drag.update dragMsg model.dragState
+                , layout =
+                    { modelLayout
+                        | terminal =
+                            resetWindowResizeFences model.layout.terminal
+                    }
+            }
 
         Drag.Click _ _ ->
             { model | dragState = Drag.update dragMsg model.dragState }
@@ -195,23 +193,25 @@ syncAppSize layout =
         candidateHeight =
             layout.terminal.height + layout.terminal.top
     in
-        { layout
-            | app =
-                { layoutApp
-                    | width =
-                        if candidateWidth < layout.app.minWidth then
-                            -- Prevent it from shrinking all the way
-                            layout.app.minWidth
-                        else
-                            candidateWidth
-                    , height =
-                        if candidateHeight < layout.app.minHeight then
-                            -- Prevent it from shrinking all the way
-                            layout.app.minHeight
-                        else
-                            candidateHeight
-                }
-        }
+    { layout
+        | app =
+            { layoutApp
+                | width =
+                    if candidateWidth < layout.app.minWidth then
+                        -- Prevent it from shrinking all the way
+                        layout.app.minWidth
+
+                    else
+                        candidateWidth
+                , height =
+                    if candidateHeight < layout.app.minHeight then
+                        -- Prevent it from shrinking all the way
+                        layout.app.minHeight
+
+                    else
+                        candidateHeight
+            }
+    }
 
 
 
@@ -240,16 +240,14 @@ terminalWindowConfig =
 view : Model -> Html Msg
 view model =
     div
-        [ style
-            [ ( "position", "relative" )
-            , ( "height", (toString model.layout.app.height) ++ "px" )
-            , ( "width", (toString model.layout.app.width) ++ "px" )
-            , ( "background-color", "#f59" )
-            ]
+        [ style "position" "relative"
+        , style "height" (String.fromInt model.layout.app.height ++ "px")
+        , style "width" (String.fromInt model.layout.app.width ++ "px")
+        , style "background-color" "#f59"
         ]
         [ Html.node "style"
             []
-            [ (styleWindow defaultStyleConfig)
+            [ styleWindow defaultStyleConfig
                 |> Css.stylesheet
                 |> List.singleton
                 |> Css.compile
@@ -261,43 +259,35 @@ view model =
             terminalWindowConfig
             model.layout.terminal
             [ div
-                [ style
-                    [ ( "width", "100%" )
-                    , ( "height", "100%" )
-                    , ( "position", "relative" )
-                    , ( "display", "flex" )
-                    , ( "flex-direction", "column" )
-                    , ( "background-color", "#fff" )
-                    ]
+                [ style "width" "100%"
+                , style "height" "100%"
+                , style "position" "relative"
+                , style "display" "flex"
+                , style "flex-direction" "column"
+                , style "background-color" "#fff"
                 ]
                 [ div
-                    [ style
-                        [ ( "min-height", "10px" )
-                        , ( "background-color", "#95f" )
-                        , ( "display", "flex" )
-                        , ( "flex-grow", "0" )
-                        , ( "flex-shrink", "0" )
-                        , ( "flex-basis", "initial" )
-                        , ( "justify-content", "space-between" )
-                        ]
+                    [ style "min-height" "10px"
+                    , style "background-color" "#95f"
+                    , style "display" "flex"
+                    , style "flex-grow" "0"
+                    , style "flex-shrink" "0"
+                    , style "flex-basis" "initial"
+                    , style "justify-content" "space-between"
                     , onMouseDownTranslateWindow terminalWindowConfig
                     ]
                     [ span [] [ text "Terminal" ]
                     , span [] [ text "X" ]
                     ]
                 , div
-                    [ style
-                        [ ( "background-color", "#fff" )
-                        , ( "flex-grow", "1" )
-                        , ( "overflow-y", "scroll" )
-                        , ( "overflow-x", "hidden" )
-                        ]
+                    [ style "background-color" "#fff"
+                    , style "flex-grow" "1"
+                    , style "overflow-y" "scroll"
+                    , style "overflow-x" "hidden"
                     ]
                     [ input
-                        [ style
-                            [ ( "border", "none" )
-                            , ( "width", "100%" )
-                            ]
+                        [ style "border" "none"
+                        , style "width" "100%"
                         ]
                         []
                     ]
@@ -307,23 +297,19 @@ view model =
             widgetWindowConfig
             model.layout.widget
             [ div
-                [ style
-                    [ ( "background-color", "#fff" )
-                    , ( "width", "100%" )
-                    , ( "height", "100%" )
-                    , ( "position", "relative" )
-                    , ( "overflow", "hidden" )
-                    ]
+                [ style "background-color" "#fff"
+                , style "width" "100%"
+                , style "height" "100%"
+                , style "position" "relative"
+                , style "overflow" "hidden"
                 ]
                 [ text "widget"
                 , div
-                    [ style
-                        [ ( "background-color", "#95f" )
-                        , ( "width", "100px" )
-                        , ( "height", "50px" )
-                        , ( "margin-top", "50px" )
-                        , ( "margin-left", "50px" )
-                        ]
+                    [ style "background-color" "#95f"
+                    , style "width" "100px"
+                    , style "height" "50px"
+                    , style "margin-top" "50px"
+                    , style "margin-left" "50px"
                     , onMouseDownTranslateWindow widgetWindowConfig
                     ]
                     [ text "window drag handle" ]
@@ -335,14 +321,12 @@ view model =
 viewDummyAppPage : Html msg
 viewDummyAppPage =
     div
-        [ style
-            [ ( "background-color", "#f59" )
-            , ( "height", "100%" )
-            , ( "width", "100%" )
-            , ( "position", "absolute" )
-            , ( "top", "0" )
-            , ( "z-index", "-1" )
-            ]
+        [ style "background-color" "#f59"
+        , style "height" "100%"
+        , style "width" "100%"
+        , style "position" "absolute"
+        , style "top" "0"
+        , style "z-index" "-1"
         ]
         []
 
@@ -354,6 +338,6 @@ viewDummyAppPage =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Window.resizes ResizeWindow
+        [ Browser.Events.onResize ResizeWindow
         , Sub.map DragMsg (Drag.subscriptions model.dragState)
         ]
